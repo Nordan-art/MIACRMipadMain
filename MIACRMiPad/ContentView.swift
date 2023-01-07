@@ -20,7 +20,6 @@ struct ContentView: View {
     @State private var DataState = stateContent()
     
     @State private var showPreview = false // state activating preview
-    @StateObject var documentController = DocumentController()
     
     @Environment(\.openWindow) private var openWindow
         
@@ -40,34 +39,17 @@ struct ContentView: View {
                 .frame(width: 35, height: 35)
                 
                 Button(action: {
-//                    UIApplication.mainWindow?.windowController?.newWindowForTab(nil)
-//                    let activity = NSUserActivity(activityType: "newWindow")
-//                    activity.userInfo = ["some key":"some value"]
-//                    activity.targetContentIdentifier = "newWindow" // IMPORTANT
-//                    UIApplication.shared.requestSceneSessionActivation(nil, userActivity: activity, options: nil)
-//                    openWindow(id: "newWindow")
-//                    self.showPreview = true
-                    
-                    documentController.presentDocument(url: URL(string: "file:///var/mobile/Containers/Data/Application/9021567D-9F66-42A5-BB11-158B53B811F2/Documents/2023_20230101100135_23.pdf")!)
+                    UIApplication.shared.sendAction(#selector(WKWebView.LoadForward(_:)), to:  nil, from: nil, for: nil)
                 }) {
-                    Image(systemName: "plus.app")
+                    Image(systemName: "arrow.right")
                         .foregroundColor(Color(.white))
                 }
-                .frame(width: 45, height: 45)
+                .frame(width: 35, height: 35)
                                 
                 Button(action: {
                     UIApplication.shared.sendAction(#selector(WKWebView.goHome(_:)), to:  nil, from: nil, for: nil)
                 }) {
                     Image(systemName: "house")
-                        .foregroundColor(Color(.white))
-                        
-                }
-                .frame(width: 45, height: 45)
-                
-                Button(action: {
-//                        SendToPrintFile().SendToPrint()
-                }) {
-                    Image(systemName: "printer.dotmatrix")
                         .foregroundColor(Color(.white))
                 }
                 .frame(width: 45, height: 45)
@@ -92,31 +74,6 @@ struct ContentView: View {
 
 struct UrlData {
     static var urlToPrinter: URL? = URL(string: "https://crm.mcgroup.pl/public/uploads/tasksfiles/2022/12/01/1669907445/Faktura-446_20221201111202.pdf")
-}
-
-class SendToPrintFile: UIView, PDFViewDelegate {
-//class SendToPrintFile: NSView, PDFViewDelegate {
-    
-//    func setNewUrlToPrint(newUrl: URL?) {
-//        UrlData.urlToPrinter = newUrl
-//    }
-//    
-//    func SendToPrint(  ) {
-//        let pdfView = PDFView()
-//        let path = UrlData.urlToPrinter!
-//        let pdfDoc = PDFDocument(url: path)
-//        let wnd = NSWindow()
-//        
-//        pdfView.autoScales = true
-//        pdfView.delegate = self
-//        pdfView.displayMode = .singlePage
-//        pdfView.displayDirection = .vertical
-//        pdfView.document = pdfDoc
-//        wnd.setFrame(CGRect(x: 0, y: 0, width: 0, height: 0), display: true, animate: true)
-//        wnd.center()
-//        wnd.contentView = pdfView
-//        pdfView.print(with: NSPrintInfo.shared, autoRotate: true)
-//    }
 }
 
 struct ContentView_Previews: PreviewProvider {
@@ -146,19 +103,5 @@ struct CornerRadiusStyle: ViewModifier {
 extension View {
     func cornerRadius(radius: CGFloat, corners: UIRectCorner) -> some View {
         ModifiedContent(content: self, modifier: CornerRadiusStyle(radius: radius, corners: corners))
-    }
-}
-
-class DocumentController: NSObject, ObservableObject, UIDocumentInteractionControllerDelegate {
-    let controller = UIDocumentInteractionController()
-    
-    func presentDocument(url: URL) {
-        controller.delegate = self
-        controller.url = url
-        controller.presentPreview(animated: true)
-    }
-
-    func documentInteractionControllerViewControllerForPreview(_: UIDocumentInteractionController) -> UIViewController {
-        return UIApplication.shared.windows.first!.rootViewController!
     }
 }
