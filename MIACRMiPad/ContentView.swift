@@ -19,6 +19,9 @@ struct ContentView: View {
     @State var strCheckPdf: String = UrlData.urlToPrinter!.absoluteString
     @State private var DataState = stateContent()
     
+    @State private var showPreview = false // state activating preview
+    @StateObject var documentController = DocumentController()
+    
     @Environment(\.openWindow) private var openWindow
         
     var body: some View {
@@ -43,6 +46,9 @@ struct ContentView: View {
 //                    activity.targetContentIdentifier = "newWindow" // IMPORTANT
 //                    UIApplication.shared.requestSceneSessionActivation(nil, userActivity: activity, options: nil)
 //                    openWindow(id: "newWindow")
+//                    self.showPreview = true
+                    
+                    documentController.presentDocument(url: URL(string: "file:///var/mobile/Containers/Data/Application/9021567D-9F66-42A5-BB11-158B53B811F2/Documents/2023_20230101100135_23.pdf")!)
                 }) {
                     Image(systemName: "plus.app")
                         .foregroundColor(Color(.white))
@@ -80,63 +86,6 @@ struct ContentView: View {
             .cornerRadius(radius: 15.0, corners: [.topLeft, .topRight])
             .frame(maxHeight: .infinity, alignment: .bottom)
             
-        }
-        .toolbar {
-//            Left arrow (GoBack)
-            ToolbarItem( ) {
-                Button(action: {
-//                    NSApp.sendAction(#selector(WKWebView.LoadBack(_:)), to: nil, from: nil)
-                }) {
-                    Image(systemName: "arrow.left")
-                }
-                .frame(width: 35, height: 35)
-            }
-//            Button in right part of screen like print, home, reload etc.
-            ToolbarItem() {
-                HStack {
-                    Button(action: {
-//                        if let currentWindow = NSApp.keyWindow,
-//                              let windowController = currentWindow.windowController {
-//                                windowController.newWindowForTab(nil)
-//                                if let newWindow = NSApp.keyWindow, currentWindow != newWindow {
-//                                 currentWindow.addTabbedWindow(newWindow, ordered: .above)
-//                                }
-//                              }
-                    }) {
-                        Image(systemName: "plus.app")
-                    }
-                    .frame(width: 35, height: 35)
-                    
-                    
-                    Button(action: {
-//                        NSApp.mainWindow?.windowController?.newWindowForTab(nil)
-                    }) {
-                        Image(systemName: "macwindow.badge.plus")
-                    }
-                    .frame(width: 35, height: 35)
-                    
-                    Button(action: {
-//                        SendToPrintFile().SendToPrint()
-                    }) {
-                        Image(systemName: "printer.dotmatrix")
-                    }
-                    .frame(width: 35, height: 35)
-                    
-                    Button(action: {
-//                        NSApp.sendAction(#selector(WKWebView.goHome(_:)), to: nil, from: nil)
-                    }) {
-                        Image(systemName: "house")
-                    }
-                    .frame(width: 35, height: 35)
-                    
-                    Button(action: {
-//                        NSApp.sendAction(#selector(WKWebView.Reload(_:)), to: nil, from: nil)
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                    .frame(width: 35, height: 35)
-                }
-            }
         }
     }
 }
@@ -197,5 +146,19 @@ struct CornerRadiusStyle: ViewModifier {
 extension View {
     func cornerRadius(radius: CGFloat, corners: UIRectCorner) -> some View {
         ModifiedContent(content: self, modifier: CornerRadiusStyle(radius: radius, corners: corners))
+    }
+}
+
+class DocumentController: NSObject, ObservableObject, UIDocumentInteractionControllerDelegate {
+    let controller = UIDocumentInteractionController()
+    
+    func presentDocument(url: URL) {
+        controller.delegate = self
+        controller.url = url
+        controller.presentPreview(animated: true)
+    }
+
+    func documentInteractionControllerViewControllerForPreview(_: UIDocumentInteractionController) -> UIViewController {
+        return UIApplication.shared.windows.first!.rootViewController!
     }
 }
