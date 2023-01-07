@@ -4,6 +4,7 @@
 //
 //  Created by Danik on 29.12.22.
 //
+import PDFKit
 import UIKit
 import Foundation
 import SwiftUI
@@ -242,34 +243,25 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
     func downloadFileFromPreviewButton(url: URL) {
 //        let documentsUrl:URL =  (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?)!
 //        let url = documentsUrl.appendingPathComponent(url.lastPathComponent)
-        clearAllFiles()
         
-        print("url: \(url) ===========================")
+        clearAllFiles()
 
         let downloadTask = URLSession.shared.downloadTask(with: url) { urlOrNil, responseOrNil, errorOrNil in
-            // check for and handle errors:
-            // * errorOrNil should be nil
-            // * responseOrNil should be an HTTPURLResponse with statusCode in 200..<299
             
             guard let fileURL = urlOrNil else { return }
             do {
                 let documentsURL = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
                 let savedURL = documentsURL.appendingPathComponent(fileURL.lastPathComponent)
                 
-                if FileManager.default.fileExists(atPath: savedURL.path) {
-                    // delete file
-                    do {
-                        try FileManager.default.removeItem(atPath: savedURL.path)
-                    } catch {
-                        print("Could not delete file, probably read-only filesystem")
-                    }
-                }
+                let fileName = responseOrNil?.url?.lastPathComponent.components(separatedBy: ".")[0]
+                let fileType = responseOrNil?.mimeType?.components(separatedBy: "/")[1]
                 
-                try FileManager.default.moveItem(at: fileURL, to: savedURL)
-//                documentController.presentDocument(url: fileURL)
-                print("urlOrNil \(urlOrNil)")
-                print("fileURL \(fileURL)")
-                print("savedURL \(savedURL)")
+                var fileDownload: URL! = documentsURL.appendingPathComponent("\(fileName!).\(fileType!)")
+                
+                try FileManager.default.moveItem(at: fileURL, to: fileDownload)
+                
+                self.documentController.presentDocument(url: fileDownload)
+
             } catch {
                 print ("file error: \(error)")
             }
@@ -277,6 +269,7 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
         downloadTask.resume()
     }
 }
+
 
 // global veriable to set
 extension WKWebView {

@@ -27,7 +27,7 @@ var swiftIdBan = document.querySelector('.startBoxBanner').id;
 var swiftSceneElm = document.querySelector('#'+swiftIdBan+'> .HYPE_scene[style*="block"]');
 swiftSceneElm.querySelector('.login-email').value = atob(ll);
 swiftSceneElm.querySelector('.login-password').value = atob(pp);
-document.getElementById('triggerAppKey').value="macOS";
+document.getElementById('triggerAppKey').value="iPadOS";
 }
 """
 
