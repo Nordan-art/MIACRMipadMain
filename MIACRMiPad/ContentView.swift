@@ -23,12 +23,15 @@ struct ContentView: View {
     @State var isPicking: Bool = false
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
+        ZStack(alignment: .bottom) {
                 
                 WebView(data: WebViewData(url: stateContent.url))
                 
                 HStack {
+                    
+                    Divider()
+                        .frame(minWidth: 1)
+                        .overlay(Color.white.opacity(0.0))
                     
                     Button(action: {
                         UIApplication.shared.sendAction(#selector(WKWebView.LoadBack(_:)), to:  nil, from: nil, for: nil)
@@ -37,7 +40,7 @@ struct ContentView: View {
                             .foregroundColor(Color(.white))
                             .frame(width: 45, height: 45)
                     }
-                    .frame(width: 35, height: 35)
+                    .frame(width: 60, height: 40)
                     
                     Divider()
                         .frame(minWidth: 1)
@@ -49,7 +52,7 @@ struct ContentView: View {
                         Image(systemName: "arrow.right")
                             .foregroundColor(Color(.white))
                     }
-                    .frame(width: 45, height: 45)
+                    .frame(width: 60, height: 40)
                     
                     Divider()
                         .frame(minWidth: 1)
@@ -61,7 +64,7 @@ struct ContentView: View {
                         Image(systemName: "house")
                             .foregroundColor(Color(.white))
                     }
-                    .frame(width: 45, height: 45)
+                    .frame(width: 60, height: 40)
                     
                     Divider()
                         .frame(minWidth: 1)
@@ -73,17 +76,17 @@ struct ContentView: View {
                         Image(systemName: "arrow.clockwise")
                             .foregroundColor(Color(.white))
                     }
-                    .frame(width: 45, height: 45)
+                    .frame(width: 60, height: 40)
+                    
+                    Divider()
+                        .frame(minWidth: 1)
+                        .overlay(Color.white.opacity(0.0))
                 }
-                .padding(.leading, 15)
-                .padding(.trailing , 15)
                 .background(Color(red: 100 / 255, green: 108 / 255, blue: 154 / 255).opacity(0.8))
                 .cornerRadius(radius: 15.0, corners: [.topLeft, .topRight])
                 .frame(maxHeight: 35, alignment: .bottom)
-                .position(x: geometry.size.width / 2, y: geometry.size.height - 17.5)
                 
             }
-        }
     }
 }
 

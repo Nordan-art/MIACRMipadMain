@@ -56,6 +56,8 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
     
     var webView: WKWebView = WKWebView()
     
+    var fileForOpen: URL? = URL(string: "")
+    
     init(data: WebViewData) {
         self.data = data
         
@@ -86,11 +88,10 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
             }
         }
         else if navigationAction.targetFrame == nil {
-            print("Preview file NOT download")
-//            print(navigationAction.request)
-//            UIApplication.shared.open(URL(string: navURL)!)
-//            documentController.presentDocument(url: URL(string: navURL)!)
-            downloadFileFromPreviewButton(url: URL(string: navURL)!)
+            //            print(navigationAction.request)
+            //            UIApplication.shared.open(URL(string: navURL)!)
+            //            documentController.presentDocument(url: URL(string: navURL)!)
+            //            downloadFileFromPreviewButton(url: URL(string: navURL)!)
             
         }
         
@@ -102,38 +103,49 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
         let compaire = URL(string: "https://crm.mcgroup.pl/login")
         if(webView.url == compaire){
             //            get user from inputs and save them
-            webView.evaluateJavaScript(setDataL, in: nil, in: .defaultClient) { result in
-                switch result {
-                case .success(_):
-                    ()
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            }
+//            webView.evaluateJavaScript(setDataL, in: nil, in: .defaultClient) { result in
+//                switch result {
+//                case .success(_):
+//                    ()
+//                case .failure(let error):
+//                    print(error.localizedDescription)
+//                }
+//            }
             //            Get user data and set to inputs
-            webView.evaluateJavaScript(getDataL, in: nil, in: .defaultClient) { result in
-                switch result {
-                case .success(_):
-                    ()
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            }
+//            webView.evaluateJavaScript(getDataL, in: nil, in: .defaultClient) { result in
+//                switch result {
+//                case .success(_):
+//                    ()
+//                case .failure(let error):
+//                    print(error.localizedDescription)
+//                }
+//            }
         }
     }
     
+    
+    //    internal func MimeType(ext: String?) -> String {
+    //        return mimeTypes[ext?.lowercased() ?? "" ] ?? " "
+    //    }
     //    File Download function
     //    this function use when link/button/action deffined like download action
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
         
+        let fileExtension: [String] = ["HEIC", "doc", "docx", "xml", "pdf", "png", "jpg", "jpeg"]
+        
+        //        print(navigationAction.request.url!.pathExtension )
+        //        print(type(of: navigationAction.request.url!.pathExtension) )
+        
         let checkURL: String = String(describing: navigationAction.request.url!)
         if navigationAction.shouldPerformDownload {
             decisionHandler(.download, preferences)
+        } else if (fileExtension.contains( navigationAction.request.url!.pathExtension )) {
+            decisionHandler(.download, preferences)
+            return
+        } else if (checkURL.contains("view-doc")) {
+            decisionHandler(.download, preferences)
+            return
         } else {
-            if (checkURL.contains(".HEIC") || checkURL.contains(".doc") || checkURL.contains(".docx") || checkURL.contains(".xml")) {
-                decisionHandler(.download, preferences)
-                return
-            }
             decisionHandler(.allow, preferences)
         }
     }
@@ -154,11 +166,10 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
         download.delegate = self
     }
     
-    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
-//        var fileIndex = 0
-        
-                let documentsUrl:URL =  (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?)!
-        let url = documentsUrl.appendingPathComponent(suggestedFilename)
+    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void)  {
+        clearAllFiles()
+        let documentsUrl:URL =  (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?)!
+//        let url = documentsUrl.appendingPathComponent(suggestedFilename)
         
         let fileName = suggestedFilename.components(separatedBy: ".")[0]
         let fileTypeSecond = suggestedFilename.components(separatedBy: ".")[1]
@@ -167,106 +178,50 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
         var fileDownload: URL! = documentsUrl.appendingPathComponent("\(fileName).\(fileType!)")
         var fileDownloadNoType: URL! = documentsUrl.appendingPathComponent("\(fileName).\(fileTypeSecond)")
         
-        if (FileManager.default.fileExists(atPath: fileDownload.path) || FileManager.default.fileExists(atPath: fileDownloadNoType.path)) {
-//                        sendNotifAfterDownload(sendDown: url, fileName: suggestedFilename)
+        
+//        if (FileManager.default.fileExists(atPath: fileDownload.path) || FileManager.default.fileExists(atPath: fileDownloadNoType.path)) {
             if (fileType! != "octet-stream" ) {
-//                repeat {
-//                    fileIndex += 1
-//                    fileDownload = documentsUrl.appendingPathComponent("\(fileName)_\(fileIndex).\(fileType!)")
-//                } while FileManager.default.fileExists(atPath: fileDownload.path)
-                if FileManager.default.fileExists(atPath: fileDownload.path) {
-                    // delete file
-                    do {
-                        try FileManager.default.removeItem(atPath: fileDownload.path)
-                    } catch {
-                        print("Could not delete file, probably read-only filesystem")
-                    }
-                }
-                
+                fileForOpen = fileDownload
                 completionHandler(fileDownload)
-                documentController.presentDocument(url: fileDownload)
             } else {
-//                repeat {
-//                    fileIndex += 1
-//                    fileDownloadNoType = documentsUrl.appendingPathComponent("\(fileName)_\(fileIndex).\(fileTypeSecond)")
-//                } while FileManager.default.fileExists(atPath: fileDownloadNoType.path)
-                if FileManager.default.fileExists(atPath: fileDownloadNoType.path) {
-                    // delete file
-                    do {
-                        try FileManager.default.removeItem(atPath: fileDownloadNoType.path)
-                    } catch {
-                        print("Could not delete file, probably read-only filesystem")
-                    }
-                }
-                
+                fileForOpen = fileDownloadNoType
                 completionHandler(fileDownloadNoType)
-                documentController.presentDocument(url: fileDownloadNoType)
             }
-        } else {
-            
-//            sendNotifAfterDownload(sendDown: url, fileName: suggestedFilename)
-            if (fileType! == "octet-stream" ) {
-                completionHandler(fileDownloadNoType)
-                documentController.presentDocument(url: fileDownloadNoType)
-            } else {
-                completionHandler(fileDownload)
-                documentController.presentDocument(url: fileDownload)
-            }
-        }
+//        } else {
+//            if (fileType! == "octet-stream" ) {
+//                fileForOpen = fileDownloadNoType
+//                completionHandler(fileDownloadNoType)
+//            } else {
+//                fileForOpen = fileDownload
+//                completionHandler(fileDownload)
+//            }
+//        }
     }
     
     //    Here i can write all what need to use after end of download process
     func downloadDidFinish(_ download: WKDownload) {
         print("download was ended")
+        documentController.presentDocument(url: fileForOpen!)
     }
     
     func clearAllFiles() {
         let fileManager = FileManager.default
-            
+        
         let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-            
-        print("Directory: \(paths)")
-            
+        
         do {
             let fileName = try fileManager.contentsOfDirectory(atPath: paths)
-                
+            
             for file in fileName {
                 // For each file in the directory, create full path and delete the file
                 let filePath = URL(fileURLWithPath: paths).appendingPathComponent(file).absoluteURL
+                
+                print("delete@@ : \(filePath)")
                 try fileManager.removeItem(at: filePath)
             }
         } catch let error {
             print(error)
         }
-    }
-    
-    func downloadFileFromPreviewButton(url: URL) {
-//        let documentsUrl:URL =  (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?)!
-//        let url = documentsUrl.appendingPathComponent(url.lastPathComponent)
-        
-        clearAllFiles()
-
-        let downloadTask = URLSession.shared.downloadTask(with: url) { urlOrNil, responseOrNil, errorOrNil in
-            
-            guard let fileURL = urlOrNil else { return }
-            do {
-                let documentsURL = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-                let savedURL = documentsURL.appendingPathComponent(fileURL.lastPathComponent)
-                
-                let fileName = responseOrNil?.url?.lastPathComponent.components(separatedBy: ".")[0]
-                let fileType = responseOrNil?.mimeType?.components(separatedBy: "/")[1]
-                
-                var fileDownload: URL! = documentsURL.appendingPathComponent("\(fileName!).\(fileType!)")
-                
-                try FileManager.default.moveItem(at: fileURL, to: fileDownload)
-                
-                self.documentController.presentDocument(url: fileDownload)
-
-            } catch {
-                print ("file error: \(error)")
-            }
-        }
-        downloadTask.resume()
     }
 }
 
@@ -317,30 +272,30 @@ class DocumentController: NSObject, ObservableObject, UIDocumentInteractionContr
         controller.url = url
         controller.presentPreview(animated: true)
     }
-
-//    func documentInteractionControllerViewControllerForPreview(_: UIDocumentInteractionController) -> UIViewController {
-//        return UIApplication.shared.windows.first!.rootViewController!
-//    }
-
+    
+    //    func documentInteractionControllerViewControllerForPreview(_: UIDocumentInteractionController) -> UIViewController {
+    //        return UIApplication.shared.windows.first!.rootViewController!
+    //    }
+    
     func documentInteractionControllerViewControllerForPreview(_: UIDocumentInteractionController) -> UIViewController {
-            return (UIApplication.shared.currentUIWindow()?.rootViewController)!
-        }
+        return (UIApplication.shared.currentUIWindow()?.rootViewController)!
     }
+}
 
-    public extension UIApplication {
-        func currentUIWindow() -> UIWindow? {
-            let connectedScenes = UIApplication.shared.connectedScenes
-                .filter({
-                    $0.activationState == .foregroundActive})
-                .compactMap({$0 as? UIWindowScene})
-
-            let window = connectedScenes.first?
-                .windows
-                .first { $0.isKeyWindow }
-
-            return window
-        }
+public extension UIApplication {
+    func currentUIWindow() -> UIWindow? {
+        let connectedScenes = UIApplication.shared.connectedScenes
+            .filter({
+                $0.activationState == .foregroundActive})
+            .compactMap({$0 as? UIWindowScene})
+        
+        let window = connectedScenes.first?
+            .windows
+            .first { $0.isKeyWindow }
+        
+        return window
     }
+}
 
 // Function notification of download
 func sendNotifAfterDownload(sendDown:URL, fileName:String) {

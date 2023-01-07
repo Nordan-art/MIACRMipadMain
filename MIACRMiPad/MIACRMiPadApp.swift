@@ -28,6 +28,7 @@ struct MIACRMiPadApp: App {
         WindowGroup {
             
                 ContentView()
+                .ignoresSafeArea(.keyboard)
             
         }
     }
