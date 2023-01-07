@@ -12,7 +12,6 @@ import UserNotifications
 @main
 struct MIACRMiPadApp: App {
     
-    //    let Size = NSScreen.main?.visibleFrame.size
     private var delegate: NotificationDelegate = NotificationDelegate()
     init() {
         let center = UNUserNotificationCenter.current()

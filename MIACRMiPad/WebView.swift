@@ -42,14 +42,16 @@ struct WebView: UIViewRepresentable {
 
 ///    Тут можно закрыть стракт вебвью, для разделения стракта и класса координатора
 //     Coordinator of webview
-class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate {
+class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate, UIDocumentInteractionControllerDelegate {
     
     @ObservedObject var data: WebViewData
+    
+    let documentInteractionController = UIDocumentInteractionController()
     
     var loadedUrl: URL? = nil
     
     var webView: WKWebView = WKWebView()
-    
+        
     init(data: WebViewData) {
         self.data = data
         
@@ -79,17 +81,21 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
                 return nil
             }
         }
+        else if navigationAction.targetFrame == nil {
+            print("==== ==== ==== ====")
+            print(navURL)
+            UIApplication.shared.open(URL(string: navURL)!)
+//            UIApplication.shared.open(URL(string: navURL)!)
+            
+        }
 //        else if navigationAction.targetFrame == nil {
 //            stateContent.url = navigationAction.request.url!
-//            if let currentWindow = UIApplication.keyWindow,
-//               let windowController = currentWindow.windowController {
-//                windowController.newWindowForTab(nil)
-//                if let newWindow = UIApplication.shared.mainWindow, currentWindow != newWindow {
-//                    currentWindow.addTabbedWindow(newWindow, ordered: .above)
-//                }
-//            }
+//            let activity = NSUserActivity(activityType: "newWindow")
+//            activity.targetContentIdentifier = "newWindow" // IMPORTANT
+//            UIApplication.shared.requestSceneSessionActivation(nil, userActivity: activity, options: nil)
 //            stateContent.url = URL(string: "https://crm.mcgroup.pl/")!
 //        }
+    
         return nil
     }
     
@@ -145,6 +151,41 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
 //    File Download function
 //    this function use when link/button/action deffined like download action
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
+//        do {
+//            // Get the document directory url
+//            let documentDirectory = try FileManager.default.url(
+//                for: .documentDirectory,
+//                in: .userDomainMask,
+//                appropriateFor: nil,
+//                create: true
+//            )
+//            print("documentDirectory", documentDirectory.path)
+//            // Get the directory contents urls (including subfolders urls)
+//            let directoryContents = try FileManager.default.contentsOfDirectory(
+//                at: documentDirectory,
+//                includingPropertiesForKeys: nil
+//            )
+//            print("directoryContents:", directoryContents.map { $0.localizedName ?? $0.lastPathComponent })
+//            for url in directoryContents {
+//                print(url.localizedName ?? url.lastPathComponent)
+//            }
+//
+//            // if you would like to hide the file extension
+//            for var url in directoryContents {
+//                url.hasHiddenExtension = true
+//            }
+//            for url in directoryContents {
+//                print(url.localizedName ?? url.lastPathComponent)
+//            }
+//
+//            // if you want to get all mp3 files located at the documents directory:
+//            let mp3s = directoryContents.filter(\.isMP3).map { $0.localizedName ?? $0.lastPathComponent }
+//            print("mp3s:", mp3s)
+        
+//        } catch {
+//            print(error)
+//        }
+        
         print("1")
         let checkURL: String = String(describing: navigationAction.request.url!)
         if navigationAction.shouldPerformDownload {
@@ -215,99 +256,136 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
 //            }
 //        }
 //    }
-//    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
-//        // Create destination URL
-//          let documentsUrl:URL =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-//          let destinationFileUrl = documentsUrl.appendingPathComponent(suggestedFilename)
-//
-//          //Create URL to the source file you want to download
-//        let fileURL = response.url!
-//
-//          let sessionConfig = URLSessionConfiguration.default
-//          let session = URLSession(configuration: sessionConfig)
-//
-//          let request = URLRequest(url:fileURL)
-//
-//          let task = session.downloadTask(with: request) { (tempLocalUrl, response, error) in
-//              print(request)
-//              print(tempLocalUrl)
-//              if let tempLocalUrl = tempLocalUrl, error == nil {
-//                  // Success
-//                  if let statusCode = (response as? HTTPURLResponse)?.statusCode {
-//                      print("Successfully downloaded. Status code: \(statusCode)")
-//                  }
-//
-//                  do {
-//                      try FileManager.default.copyItem(at: tempLocalUrl, to: destinationFileUrl)
-//                      print(tempLocalUrl)
-//                      print(destinationFileUrl)
-//                      completionHandler(tempLocalUrl)
-//                  } catch (let writeError) {
-//                      print("Error creating a file \(destinationFileUrl) : \(writeError)")
-//                  }
-//
-//              } else {
-//                  print("Error took place while downloading a file. Error description: %@", error?.localizedDescription);
-//              }
-//          }
-//          task.resume()
-//    }
+    
+    func getDocumentsDirectory() -> URL { // returns your application folder
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let documentsDirectory = paths[0]
+        return documentsDirectory
+    }
+    
     func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
         var fileIndex = 0
-        let documentsUrl:URL =  (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?)!
+        
+//        let documentsUrl:URL =  (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?)!
+        let documentsUrl =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let url = documentsUrl.appendingPathComponent(suggestedFilename)
 
         let fileName = suggestedFilename.components(separatedBy: ".")[0]
         let fileTypeSecond = suggestedFilename.components(separatedBy: ".")[1]
         let fileType = response.mimeType?.components(separatedBy: "/")[1]
-
+        
         var fileDownload: URL! = documentsUrl.appendingPathComponent("\(fileName).\(fileType!)")
         var fileDownloadNoType: URL! = documentsUrl.appendingPathComponent("\(fileName).\(fileTypeSecond)")
-
+                
+        let path = getDocumentsDirectory().absoluteString.replacingOccurrences(of: "file://", with: "shareddocuments://")
+        let docFolderUrl = URL(string: path)!
+        
         if (FileManager.default.fileExists(atPath: fileDownload.path) || FileManager.default.fileExists(atPath: fileDownloadNoType.path)) {
             print("111")
-            sendNotifAfterDownload(sendDown: url, fileName: suggestedFilename)
+//            sendNotifAfterDownload(sendDown: url, fileName: suggestedFilename)
             if (fileType! != "octet-stream" ) {
                 repeat {
                     fileIndex += 1
                     fileDownload = documentsUrl.appendingPathComponent("\(fileName)_\(fileIndex).\(fileType!)")
                 } while FileManager.default.fileExists(atPath: fileDownload.path)
-
-                URLSession.shared.downloadTask(with: response.url!) { (tempFileUrl, response, error) in
-                        if let imageTempFileUrl = tempFileUrl {
-                            do {
-                                let data = try Data(contentsOf: imageTempFileUrl)
-                                try data.write(to: fileDownload)
-                                print("========================")
-                                print(response!.url!)
-                                print(data)
-                                print(tempFileUrl)
-                                print(imageTempFileUrl)
-                                print(documentsUrl)
-                                print(fileDownload!)
-                                print(fileDownloadNoType!)
-                            } catch {
-                                print("Error: ")
-                                print(error)
-                            }
-                        }
-                    }.resume()
-
+                    
+//                URLSession.shared.downloadTask(with: response.url!) { (tempFileUrl, response, error) in
+//                        if let imageTempFileUrl = tempFileUrl {
+//                            do {
+//                                let data = try Data(contentsOf: imageTempFileUrl)
+//                                try data.write(to: fileDownload)
+//                                print("========================")
+//                                print(documentsUrl)
+//                                print(fileDownload!)
+//                            } catch {
+//                                print("Error: ")
+//                                print(error)
+//                            }
+//                        }
+//                    }.resume()
+                                
                 completionHandler(fileDownload)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if let sharedUrl = URL(string: "shareddocuments://\(fileDownload.path)") {
+                        if UIApplication.shared.canOpenURL(sharedUrl) {
+                            print("open: 1")
+                            print(docFolderUrl)
+                            print(sharedUrl)
+                            UIApplication.shared.open(sharedUrl, options: [:], completionHandler: nil)
+//                            UIApplication.shared.open(sharedUrl)
+//                            UIApplication.shared.open(docFolderUrl)
+//                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+//                                print("hui: 1")
+//                                UIApplication.shared.open(sharedUrl, options: [:])
+//                            }
+                        }
+                    }
+                            }
             } else {
                 repeat {
                     fileIndex += 1
                     fileDownloadNoType = documentsUrl.appendingPathComponent("\(fileName)_\(fileIndex).\(fileTypeSecond)")
                 } while FileManager.default.fileExists(atPath: fileDownloadNoType.path)
+                
                 completionHandler(fileDownloadNoType)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        if let sharedUrl = URL(string: "shareddocuments://\(fileDownloadNoType.path)") {
+                        if UIApplication.shared.canOpenURL(sharedUrl) {
+                            print("open: 2")
+                            print(docFolderUrl)
+                            print(sharedUrl)
+                            UIApplication.shared.open(sharedUrl, options: [:], completionHandler: nil)
+//                            UIApplication.shared.open(sharedUrl)
+//                            UIApplication.shared.open(docFolderUrl)
+//                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+//                                print("hui: 2")
+//                                UIApplication.shared.open(sharedUrl, options: [:])
+//                            }
+                        }
+                    }
+                            }
             }
         } else {
+            
             print("222")
-            sendNotifAfterDownload(sendDown: url, fileName: suggestedFilename)
+//            sendNotifAfterDownload(sendDown: url, fileName: suggestedFilename)
             if (fileType! == "octet-stream" ) {
                 completionHandler(fileDownloadNoType)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if let sharedUrl = URL(string: "shareddocuments://\(fileDownloadNoType.path)") {
+                        if UIApplication.shared.canOpenURL(sharedUrl) {
+                            print("open: 3")
+                            print(docFolderUrl)
+                            print(sharedUrl)
+                            UIApplication.shared.open(sharedUrl, options: [:], completionHandler: nil)
+//                            UIApplication.shared.open(sharedUrl)
+//                            UIApplication.shared.open(docFolderUrl)
+//                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+//                                print("hui: 3")
+//                                UIApplication.shared.open(sharedUrl, options: [:])
+//                            }
+                        }
+                    }
+                            }
             } else {
                 completionHandler(fileDownload)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if let sharedUrl = URL(string: "shareddocuments://\(fileDownload.path)") {
+                        if UIApplication.shared.canOpenURL(sharedUrl) {
+                            print("open: 4")
+                            print(docFolderUrl)
+                            print(sharedUrl)
+                            UIApplication.shared.open(sharedUrl, options: [:], completionHandler: nil)
+//                            UIApplication.shared.open(sharedUrl)
+//                            UIApplication.shared.open(docFolderUrl)
+//                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+//                                print("hui: 4")
+//                                UIApplication.shared.open(sharedUrl, options: [:])
+//                            }
+                        }
+                    }
+                            }
             }
         }
     }
@@ -315,6 +393,8 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
 //    Here i can write all what need to use after end of download process
     func downloadDidFinish(_ download: WKDownload) {
         print("download was ended")
+//        UIApplication.shared.open(
+//            URL(string: "shareddocuments:///var/mobile/Containers/Data/Application/0F5B677F-02E5-4F62-A735-A511684DEA85/Documents/ZUS-20221229103412_6.pdf")!, options: [:])
     }
 }
 
@@ -331,6 +411,20 @@ extension WKWebView {
     
     @objc func goHome(_ sender: Any) {
         self.load( URLRequest(url: URL(string:  "https://crm.mcgroup.pl/")!))
+    }
+}
+
+extension URL {
+    var typeIdentifier: String? { (try? resourceValues(forKeys: [.typeIdentifierKey]))?.typeIdentifier }
+    var isMP3: Bool { typeIdentifier == "public.mp3" }
+    var localizedName: String? { (try? resourceValues(forKeys: [.localizedNameKey]))?.localizedName }
+    var hasHiddenExtension: Bool {
+        get { (try? resourceValues(forKeys: [.hasHiddenExtensionKey]))?.hasHiddenExtension == true }
+        set {
+            var resourceValues = URLResourceValues()
+            resourceValues.hasHiddenExtension = newValue
+            try? setResourceValues(resourceValues)
+        }
     }
 }
 

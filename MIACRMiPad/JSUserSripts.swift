@@ -20,6 +20,7 @@ document.addEventListener('click', (e)=>{
 """
 
 let getDataL  = """
+if(localStorage.getItem('datalcrm')){
 var ll = localStorage.getItem('datalcrm');
 var pp = localStorage.getItem('datapcrm');
 var swiftIdBan = document.querySelector('.startBoxBanner').id;
@@ -27,5 +28,6 @@ var swiftSceneElm = document.querySelector('#'+swiftIdBan+'> .HYPE_scene[style*=
 swiftSceneElm.querySelector('.login-email').value = atob(ll);
 swiftSceneElm.querySelector('.login-password').value = atob(pp);
 document.getElementById('triggerAppKey').value="macOS";
+}
 """
 

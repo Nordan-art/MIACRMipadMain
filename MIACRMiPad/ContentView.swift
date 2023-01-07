@@ -18,6 +18,8 @@ struct ContentView: View {
     
     @State var strCheckPdf: String = UrlData.urlToPrinter!.absoluteString
     @State private var DataState = stateContent()
+    
+    @Environment(\.openWindow) private var openWindow
         
     var body: some View {
         ZStack {
@@ -36,7 +38,11 @@ struct ContentView: View {
                 
                 Button(action: {
 //                    UIApplication.mainWindow?.windowController?.newWindowForTab(nil)
-                    
+//                    let activity = NSUserActivity(activityType: "newWindow")
+//                    activity.userInfo = ["some key":"some value"]
+//                    activity.targetContentIdentifier = "newWindow" // IMPORTANT
+//                    UIApplication.shared.requestSceneSessionActivation(nil, userActivity: activity, options: nil)
+//                    openWindow(id: "newWindow")
                 }) {
                     Image(systemName: "plus.app")
                         .foregroundColor(Color(.white))
