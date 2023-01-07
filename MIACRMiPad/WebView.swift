@@ -85,7 +85,12 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
             }
         }
         else if navigationAction.targetFrame == nil {
-            UIApplication.shared.open(URL(string: navURL)!)
+            print("Preview file NOT download")
+//            print(navigationAction.request)
+//            UIApplication.shared.open(URL(string: navURL)!)
+//            documentController.presentDocument(url: URL(string: navURL)!)
+            downloadFileFromPreviewButton(url: URL(string: navURL)!)
+            
         }
         
         return nil
@@ -149,7 +154,7 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
     }
     
     func download(_ download: WKDownload, decideDestinationUsing response: URLResponse, suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
-        var fileIndex = 0
+//        var fileIndex = 0
         
                 let documentsUrl:URL =  (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?)!
         let url = documentsUrl.appendingPathComponent(suggestedFilename)
@@ -164,18 +169,34 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
         if (FileManager.default.fileExists(atPath: fileDownload.path) || FileManager.default.fileExists(atPath: fileDownloadNoType.path)) {
 //                        sendNotifAfterDownload(sendDown: url, fileName: suggestedFilename)
             if (fileType! != "octet-stream" ) {
-                repeat {
-                    fileIndex += 1
-                    fileDownload = documentsUrl.appendingPathComponent("\(fileName)_\(fileIndex).\(fileType!)")
-                } while FileManager.default.fileExists(atPath: fileDownload.path)
+//                repeat {
+//                    fileIndex += 1
+//                    fileDownload = documentsUrl.appendingPathComponent("\(fileName)_\(fileIndex).\(fileType!)")
+//                } while FileManager.default.fileExists(atPath: fileDownload.path)
+                if FileManager.default.fileExists(atPath: fileDownload.path) {
+                    // delete file
+                    do {
+                        try FileManager.default.removeItem(atPath: fileDownload.path)
+                    } catch {
+                        print("Could not delete file, probably read-only filesystem")
+                    }
+                }
                 
                 completionHandler(fileDownload)
                 documentController.presentDocument(url: fileDownload)
             } else {
-                repeat {
-                    fileIndex += 1
-                    fileDownloadNoType = documentsUrl.appendingPathComponent("\(fileName)_\(fileIndex).\(fileTypeSecond)")
-                } while FileManager.default.fileExists(atPath: fileDownloadNoType.path)
+//                repeat {
+//                    fileIndex += 1
+//                    fileDownloadNoType = documentsUrl.appendingPathComponent("\(fileName)_\(fileIndex).\(fileTypeSecond)")
+//                } while FileManager.default.fileExists(atPath: fileDownloadNoType.path)
+                if FileManager.default.fileExists(atPath: fileDownloadNoType.path) {
+                    // delete file
+                    do {
+                        try FileManager.default.removeItem(atPath: fileDownloadNoType.path)
+                    } catch {
+                        print("Could not delete file, probably read-only filesystem")
+                    }
+                }
                 
                 completionHandler(fileDownloadNoType)
                 documentController.presentDocument(url: fileDownloadNoType)
@@ -196,6 +217,64 @@ class WebViewCoordinator: NSObject, ObservableObject, WKUIDelegate, WKNavigation
     //    Here i can write all what need to use after end of download process
     func downloadDidFinish(_ download: WKDownload) {
         print("download was ended")
+    }
+    
+    func clearAllFiles() {
+        let fileManager = FileManager.default
+            
+        let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
+            
+        print("Directory: \(paths)")
+            
+        do {
+            let fileName = try fileManager.contentsOfDirectory(atPath: paths)
+                
+            for file in fileName {
+                // For each file in the directory, create full path and delete the file
+                let filePath = URL(fileURLWithPath: paths).appendingPathComponent(file).absoluteURL
+                try fileManager.removeItem(at: filePath)
+            }
+        } catch let error {
+            print(error)
+        }
+    }
+    
+    func downloadFileFromPreviewButton(url: URL) {
+//        let documentsUrl:URL =  (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?)!
+//        let url = documentsUrl.appendingPathComponent(url.lastPathComponent)
+        clearAllFiles()
+        
+        print("url: \(url) ===========================")
+
+        let downloadTask = URLSession.shared.downloadTask(with: url) { urlOrNil, responseOrNil, errorOrNil in
+            // check for and handle errors:
+            // * errorOrNil should be nil
+            // * responseOrNil should be an HTTPURLResponse with statusCode in 200..<299
+            
+            guard let fileURL = urlOrNil else { return }
+            do {
+                let documentsURL = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+                let savedURL = documentsURL.appendingPathComponent(fileURL.lastPathComponent)
+                
+                if FileManager.default.fileExists(atPath: savedURL.path) {
+                    // delete file
+                    do {
+                        try FileManager.default.removeItem(atPath: savedURL.path)
+                    } catch {
+                        print("Could not delete file, probably read-only filesystem")
+                    }
+                }
+                
+                try FileManager.default.moveItem(at: fileURL, to: savedURL)
+//                documentController.presentDocument(url: fileURL)
+                print("urlOrNil \(urlOrNil)")
+                print("fileURL \(fileURL)")
+                print("savedURL \(savedURL)")
+            } catch {
+                print ("file error: \(error)")
+            }
+        }
+        downloadTask.resume()
     }
 }
 

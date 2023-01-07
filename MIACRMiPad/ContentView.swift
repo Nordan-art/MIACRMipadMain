@@ -21,8 +21,8 @@ struct ContentView: View {
     
     @State private var showPreview = false // state activating preview
     
-    @Environment(\.openWindow) private var openWindow
-        
+    @State var isPicking: Bool = false
+            
     var body: some View {
         ZStack {
             
@@ -53,6 +53,21 @@ struct ContentView: View {
                         .foregroundColor(Color(.white))
                 }
                 .frame(width: 45, height: 45)
+                
+                Button(action: {
+                    isPicking.toggle()
+                }) {
+                    Image(systemName: "printer.dotmatrix")
+                        .foregroundColor(Color(.white))
+                }
+                .frame(width: 45, height: 45)
+                .fileImporter(
+                            isPresented: $isPicking,
+                            allowedContentTypes: [.movie],
+                            allowsMultipleSelection: true,
+                            onCompletion: { result in
+                                print("Picked: \(result)")
+                            })
                 
                 Button(action: {
                     UIApplication.shared.sendAction(#selector(WKWebView.Reload(_:)), to:  nil, from: nil, for: nil)
